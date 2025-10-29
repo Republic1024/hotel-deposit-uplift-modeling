@@ -2,19 +2,87 @@
 
 **Causal Inference · Customer Behavior Analytics · Observational A/B**
 
-This project uses **uplift modeling (heterogeneous treatment effect / ITE)** to estimate how **deposit policy** (`deposit_type`) affects **booking cancellations** (`is_canceled`) on a per-user basis. Rather than predicting “who cancels,” we quantify **the causal *difference***:
-[
-\text{uplift}(x) ;=; P(\text{cancel}\mid \text{deposit},x);-;P(\text{cancel}\mid \text{no-deposit},x)
-]
+This project uses **uplift modeling (heterogeneous treatment effect / ITE)** to estimate how **deposit policy** (`deposit_type`) affects **booking cancellations** (`is_canceled`) on a per-user basis. Rather than predicting “who cancels,” we quantify **the causal *difference***.
 
-## ✨ Key Findings
+![image-20251030033000245](./assets/image-20251030033000245.png)
 
-* **Counter-intuitive pattern.** Users predicted to be **most sensitive to deposits** (high uplift) actually show **lower baseline cancel probability** (≈ **0.13**) than low-sensitivity users (≈ **0.51**).
-  → **Interpretation:** deposit works more like a **selection filter** than a deterrent.
-* **Policy:**
+![image-20251030032655183](./assets/image-20251030032655183.png)
 
-  * **Require deposits** from **low-sensitivity / high-risk** users.
-  * **Waive deposits** for **high-sensitivity / low-risk** users and **suppress post-booking offers** to avoid regret/overthinking-induced churn.
+### 🧮 Core Equations
+
+$$
+\text{uplift}(x)
+= P(\text{cancel}\mid \text{deposit},x)
+- P(\text{cancel}\mid \text{no-deposit},x)
+$$
+
+where \( x \) represents customer-level covariates (e.g., lead time, market segment, prior cancellations).
+
+---
+
+#### 1️⃣ Individual Treatment Effect (ITE)
+$$
+\tau(x) = E[Y(1) - Y(0) \mid X = x]
+$$
+Here \( Y(1) \) is the outcome (cancellation) if the user **pays a deposit**, and \( Y(0) \) if **no deposit** is required. 
+Since only one of the two outcomes is observed per user, we estimate both via counterfactual modeling.
+
+---
+
+#### 2️⃣ Propensity Score and IPW Balancing
+$$
+e(x) = P(T=1 \mid X=x)
+$$
+$$
+w_i =
+\begin{cases}
+\frac{1}{e(x_i)}, & T_i=1 \\[4pt]
+\frac{1}{1-e(x_i)}, & T_i=0
+\end{cases}
+$$
+Weights \( w_i \) correct for treatment-assignment bias (self-selection), ensuring covariate balance between deposit and no-deposit groups.
+
+---
+
+#### 3️⃣ T-Learner (Two-Model Estimation)
+We fit two independent models:
+$$
+\hat{f}_1(x) = \hat{P}(Y=1 \mid T=1, X=x)
+\quad\text{and}\quad
+\hat{f}_0(x) = \hat{P}(Y=1 \mid T=0, X=x)
+$$
+Then the **uplift score** for each customer is:
+$$
+\widehat{\text{uplift}}(x)
+= \hat{f}_1(x) - \hat{f}_0(x)
+$$
+
+### 📈 Results Snapshot
+
+| Metric                                      | Description                                  | Value      |
+| ------------------------------------------- | -------------------------------------------- | ---------- |
+| **f₁ (deposit)** accuracy                   | Model accuracy on deposit group              | **0.998**  |
+| **f₀ (no-deposit)** accuracy                | Model accuracy on no-deposit group           | **0.783**  |
+| **Average uplift**                          | Mean estimated treatment effect across users | **+0.556** |
+| **High-uplift group baseline cancel prob.** | Predicted cancellation rate under no deposit | **0.1306** |
+| **Low-uplift group baseline cancel prob.**  | Predicted cancellation rate under no deposit | **0.5131** |
+
+### ✨ Key Findings
+
+#### 🔍 Interpretation
+
+- **High-uplift users** → more *sensitive* to deposit policy but already stable (low baseline cancel rate).
+   → They don’t need deposits — waive or make optional.
+- **Low-uplift users** → less sensitive but more volatile (high baseline cancel rate).
+   → Require deposits or non-refundable bookings to enforce commitment.
+
+#### 🎯 Policy Insight
+
+> Deposit acts as a **selection filter**, not a deterrent.
+>
+> - Require deposits for **low-sensitivity** (high-risk) users.
+> - Waive deposits for **high-sensitivity** (low-risk) users.
+> - Suppress post-booking offers for high-uplift users to prevent regret-induced cancellations.
 
 ## 📦 Dataset
 
@@ -68,7 +136,5 @@ It answers *“what changes if we add/remove the deposit?”* instead of *“who
 ## 📜 License
 
 MIT (code). Dataset license follows its original source.
-
----
 
 **Contact:** [GitHub @republic1024](https://github.com/Republic1024) · For academic/industry collaboration on decision intelligence & causal uplift modeling.
