@@ -1,0 +1,57 @@
+# ===== Python Cache =====
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ===== Jupyter Notebook =====
+.ipynb_checkpoints/
+*.ipynb_save/
+*.ipynb_backup/
+
+# ===== Environment =====
+.env
+.venv/
+env/
+venv/
+ENV/
+*.env
+.DS_Store
+
+# ===== Logs =====
+*.log
+*.out
+*.err
+
+# ===== System Files =====
+Thumbs.db
+desktop.ini
+
+# ===== Build / Dist =====
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ===== Data & Archive =====
+archive_8/
+archive_8.zip
+data/raw/
+data/tmp/
+*.csv
+*.xls
+*.zip
+*.tar
+*.gz
+
+# ===== IDE / Editor =====
+.vscode/
+.idea/
+*.swp
+
+# ===== Checkpoints & Models =====
+checkpoints/
+models/
+*.pth
+*.pt
+
+
