@@ -18,7 +18,8 @@ where ( x ) represents customer-level covariates (e.g., lead time, market segmen
 
 #### 1️⃣ Individual Treatment Effect (ITE)
 
-![ite](https://latex.codecogs.com/svg.image?\tau(x)=E[Y(1)-Y(0)\mid X=x])
+![ite](https://latex.codecogs.com/svg.image?\tau(x)=E[Y(1)-Y(0)\mid
+ X=x])
 
 Here ( Y(1) ) is the outcome (cancellation) if the user **pays a deposit**, and ( Y(0) ) if **no deposit** is required.
  Since only one of the two outcomes is observed per user, we estimate both via counterfactual modeling.
