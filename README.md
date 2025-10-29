@@ -4,8 +4,6 @@
 
 This project uses **uplift modeling (heterogeneous treatment effect / ITE)** to estimate how **deposit policy** (`deposit_type`) affects **booking cancellations** (`is_canceled`) on a per-user basis. Rather than predicting “who cancels,” we quantify **the causal *difference***.
 
-![image-20251030033000245](./assets/image-20251030033000245.png)
-
 ![image-20251030032655183](./assets/image-20251030032655183.png)
 
 ### 🧮 Core Equations
