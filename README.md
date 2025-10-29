@@ -10,43 +10,42 @@ This project uses **uplift modeling (heterogeneous treatment effect / ITE)** to 
 
 ### 🧮 Core Equations
 
-![uplift formula](https://latex.codecogs.com/svg.image?%5Ctextbf%7Buplift%7D(x)=P(%5Ctext%7Bcancel%7D%5Cmid%5Ctext%7Bdeposit%7D,x)-P(%5Ctext%7Bcancel%7D%5Cmid%5Ctext%7Bno-deposit%7D,x))
+![uplift formula](https://latex.codecogs.com/svg.image?%5Ctextbf%7Buplift%7D\(x\)%20%3D%20P\(%5Ctext%7Bcancel%7D%20%5Cmid%20%5Ctext%7Bdeposit%7D%2C%20x\)%20-%20P\(%5Ctext%7Bcancel%7D%20%5Cmid%20%5Ctext%7Bno-deposit%7D%2C%20x\))
 
-where ( x ) represents customer-level covariates (e.g., lead time, market segment, prior cancellations).
+where `x` represents customer-level covariates (e.g., lead time, market segment, prior cancellations).
 
-------
+---
 
 #### 1️⃣ Individual Treatment Effect (ITE)
 
-![ite](https://latex.codecogs.com/svg.image?\tau(x)=E[Y(1)-Y(0)\mid
- X=x])
+![ite](https://latex.codecogs.com/svg.image?%5Ctau\(x\)%20%3D%20E%5BY\(1\)%20-%20Y\(0\)%20%7C%20X%20%3D%20x%5D)
 
-Here ( Y(1) ) is the outcome (cancellation) if the user **pays a deposit**, and ( Y(0) ) if **no deposit** is required.
- Since only one of the two outcomes is observed per user, we estimate both via counterfactual modeling.
+Here `Y(1)` is the outcome (cancellation) if the user **pays a deposit**, and `Y(0)` if **no deposit** is required.
+Since only one of the two outcomes is observed per user, we estimate both via counterfactual modeling.
 
-------
+---
 
 #### 2️⃣ Propensity Score and IPW Balancing
 
-![propensity](https://latex.codecogs.com/svg.image?e(x)=P(T=1\mid X=x))
+![propensity](https://latex.codecogs.com/svg.image?e\(x\)%20%3D%20P\(T%3D1%20%7C%20X%3Dx\))
 
 Weights to correct for treatment-assignment bias:
 
-![weights](https://latex.codecogs.com/svg.image?w_i=%5Cbegin%7Bcases%7D%5Cfrac%7B1%7D%7Be(x_i)%7D,&T_i=1%5C%5C%5Cfrac%7B1%7D%7B1-e(x_i)%7D,&T_i=0%5Cend%7Bcases%7D)
+![weights](https://latex.codecogs.com/svg.image?w_i%20%3D%20%5Cbegin%7Bcases%7D%20%5Cfrac%7B1%7D%7Be\(x_i\)%7D%2C%20%26%20T_i%3D1%20%5C%5C%20%5Cfrac%7B1%7D%7B1-e\(x_i\)%7D%2C%20%26%20T_i%3D0%20%5Cend%7Bcases%7D)
 
-Weights ( w_i ) correct for treatment-assignment bias (self-selection), ensuring covariate balance between deposit and no-deposit groups.
+Weights `wᵢ` correct for treatment-assignment bias (self-selection), ensuring covariate balance between deposit and no-deposit groups.
 
-------
+---
 
 #### 3️⃣ T-Learner (Two-Model Estimation)
 
 We fit two independent models:
 
-![models](https://latex.codecogs.com/svg.image?\hat{f}_1(x)=\hat{P}(Y=1\mid T=1,X=x)\quad\text{and}\quad\hat{f}_0(x)=\hat{P}(Y=1\mid T=0,X=x))
+![models](https://latex.codecogs.com/svg.image?%5Chat%7Bf%7D_1\(x\)%20%3D%20%5Chat%7BP%7D\(Y%3D1%20%5Cmid%20T%3D1%2C%20X%3Dx\)%20%5Cquad%20%5Ctext%7Band%7D%20%5Cquad%20%5Chat%7Bf%7D_0\(x\)%20%3D%20%5Chat%7BP%7D\(Y%3D1%20%5Cmid%20T%3D0%2C%20X%3Dx\))
 
 Then the **uplift score** for each customer is:
 
-![uplift score](https://latex.codecogs.com/svg.image?%5Cwidehat%7B%5Ctext%7Buplift%7D%7D(x)=%5Chat%7Bf%7D_1(x)-%5Chat%7Bf%7D_0(x))
+![uplift score](https://latex.codecogs.com/svg.image?%5Cwidehat%7B%5Ctext%7Buplift%7D%7D\(x\)%20%3D%20%5Chat%7Bf%7D_1\(x\)%20-%20%5Chat%7Bf%7D_0\(x\))
 
 ### 📈 Results Snapshot
 
