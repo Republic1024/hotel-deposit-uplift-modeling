@@ -1,0 +1,12 @@
+/* 强制对代码行进行换行，避免溢出 */
+/* 针对代码输入区 */
+div.input_area pre {
+    white-space: pre-wrap !important; /* 强制换行 */
+    word-break: break-word !important; /* 允许在单词内换行 */
+}
+
+/* 针对代码输出区 (如果输出也是长文本) */
+div.output_area pre {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+}

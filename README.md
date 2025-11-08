@@ -1,4 +1,5 @@
 # Hotel Deposit Uplift Modeling
+![img.png](img.png)
 
 **Causal Inference · Customer Behavior Analytics · Observational A/B**
 
@@ -7,6 +8,29 @@ This project uses **uplift modeling (heterogeneous treatment effect / ITE)** to 
 ![image-20251030034031202](./assets/image-20251030034031202.png)
 
 ![image-20251030032655183](./assets/image-20251030032655183.png)
+
+![image-20251108084042686](./assets/image-20251108084042686.png)
+
+### 🔥 Executive Summary (What this model proves)
+
+- Deposit policies do **not** reduce cancellations uniformly.
+- The population contains **two opposite behavioral segments**:
+  1) **High-Sensitivity users** — already committed → Deposit **induces regret → leads to cancellation**.
+  2) **Low-Sensitivity users** — low planning stability → Deposit **enforces commitment → reduces cancellation**.
+- Therefore:
+  - **Uniform deposit policy destroys value.**
+  - **Uplift-based differential deposit policy increases booking stability.**
+- Counterfactual predictions match real-world cancellation behavior at **0.999+ correlation**, confirming causal validity.
+
+### High-Level Workflow
+
+| Step | Method | Purpose |
+|---|---|---|
+| Define Treatment | `treatment = (deposit_type != "No Deposit")` | Observational A/B framing |
+| Balance Groups | **Propensity Score + IPW** | Remove self-selection bias |
+| Model Counterfactuals | **T-Learner (2 Gradient Boosting Models)** | Predict cancel probability under deposit vs no-deposit |
+| Compute Uplift | `uplift = f₁(x) − f₀(x)` | Estimate *individual* causal effect |
+| Segment Customers | **Uplift Deciles** | Identify groups that should / should not pay deposits |
 
 ### 🧮 Core Equations
 
@@ -47,32 +71,51 @@ Then the **uplift score** for each customer is:
 
 ![uplift score](https://latex.codecogs.com/svg.image?%5Cwidehat%7B%5Ctext%7Buplift%7D%7D\(x\)%20%3D%20%5Chat%7Bf%7D_1\(x\)%20-%20%5Chat%7Bf%7D_0\(x\))
 
-### 📈 Results Snapshot
+### 🔍 Core Empirical Findings
 
-| Metric                                      | Description                                  | Value      |
-| ------------------------------------------- | -------------------------------------------- | ---------- |
-| **f₁ (deposit)** accuracy                   | Model accuracy on deposit group              | **0.998**  |
-| **f₀ (no-deposit)** accuracy                | Model accuracy on no-deposit group           | **0.783**  |
-| **Average uplift**                          | Mean estimated treatment effect across users | **+0.556** |
-| **High-uplift group baseline cancel prob.** | Predicted cancellation rate under no deposit | **0.1306** |
-| **Low-uplift group baseline cancel prob.**  | Predicted cancellation rate under no deposit | **0.5131** |
+#### 1) Deposit Has **Opposite Effects** on Two Types of Users
 
-### ✨ Key Findings
+| User Segment                       | Psychological Profile                            | Effect of Deposit                              | Optimal Policy                                               |
+| ---------------------------------- | ------------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------ |
+| **High-Sensitivity (High-Uplift)** | Risk-averse, prone to regret, committed planners | **Deposit triggers anxiety → Cancels**         | **Waive deposit** + Do **not** show alternative deals after booking |
+| **Low-Sensitivity (Low-Uplift)**   | Impulsive, low planning stability                | **Deposit enforces commitment → Cancels less** | **Require deposit / non-refundable terms**                   |
 
-#### 🔍 Interpretation
+#### 2) **Counterfactual Model vs Real Behavior (Validation)**
 
-- **High-uplift users** → more *sensitive* to deposit policy but already stable (low baseline cancel rate).
-   → They don’t need deposits — waive or make optional.
-- **Low-uplift users** → less sensitive but more volatile (high baseline cancel rate).
-   → Require deposits or non-refundable bookings to enforce commitment.
+| Group                | No Deposit (Predicted) | Deposit (Predicted) | No Deposit (Observed) | Deposit (Observed) |
+| -------------------- | ---------------------- | ------------------- | --------------------- | ------------------ |
+| **High-Sensitivity** | 0.171                  | 0.991               | 0.153                 | **0.999**          |
+| **Low-Sensitivity**  | 0.198                  | 0.041               | 0.203                 | **0.060**          |
 
-#### 🎯 Policy Insight
+#### 3) Observed Cancellation Rate (Real Behavior)
 
-> Deposit acts as a **selection filter**, not a deterrent.
->
-> - Require deposits for **low-sensitivity** (high-risk) users.
-> - Waive deposits for **high-sensitivity** (low-risk) users.
-> - Suppress post-booking offers for high-uplift users to prevent regret-induced cancellations.
+| **User Group**              | **No Deposit (Observed)** | **Deposit (Observed)** | **Causal Effect (Policy Impact)** |
+| --------------------------- | ------------------------- | ---------------------- | --------------------------------- |
+| **High-Uplift** (Top 20%)   | 15.3%                     | 99.9%                  | **+84.6 p.p.** (Backfire)         |
+| **Low-Uplift** (Bottom 20%) | 20.3%                     | 6.0%                   | **-14.3 p.p.** (Effective)        |
+
+✅ Pearson Similarity = **0.9993**  
+✅ Cosine Similarity = **0.9996**  
+→ Model is **structurally aligned** with real behavior → uplift segmentation is **valid**.
+
+![image-20251108084428025](./assets/image-20251108084428025.png)
+
+#### 3) Behavioral Interpretation
+
+**Deposits do not discipline behavior — they *select for* behavior.**
+
+- High-sensitivity users were going to **show commitment anyway** → forcing deposit **breaks** that commitment.
+- Low-sensitivity users were **not committed** → deposit **creates** commitment.
+
+> **Uniform deposit policy = value destruction**  
+> **Uplift-based differentiated policy = value creation**
+
+### 💼 Business Playbook (Actionable)
+
+| Customer Signal                                              | Behavioral Interpretation     | Recommended Action                                           |
+| ------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------ |
+| High lead time + multiple special requests + repeat customer | **Deliberate planner**        | ✅ *Waive deposit* + 📴 *Stop post-booking marketing* (“静默成交”) |
+| Short lead time + many prior cancellations + transient segment | **Low-commitment / browsing** | 💰 *Require deposit / non-refundable* or *Deposit-as-credit*  |
 
 ## 📦 Dataset
 
@@ -112,7 +155,7 @@ It answers *“what changes if we add/remove the deposit?”* instead of *“who
 
 ## 📈 Sanity Checks (illustrative)
 
-* **Group fits (train)**: f₁ (treated) ≈ **0.998**, f₀ (control) ≈ **0.783**.
+* **Group fits (train)**: f₁ (treated) ≈ **0.9988**, f₀ (control) ≈ **0.7923**.
   *Note:* these are **not** the objective; the goal is **credible effect estimation**, not max classification accuracy.
 
 ## 🧠 Business Playbook
