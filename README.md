@@ -10,8 +10,6 @@ By quantifying this **causal difference**, we identify sub-populations where dep
 
 ![System Architecture](./assets/微信图片_20251210022336_959_80.jpg)
 
----
-
 ## 🔥 Executive Summary & Behavioral Economics
 
 **Key Discovery:** Deposit policies do **not** reduce cancellations uniformly. The population exhibits heterogeneous responses best explained by **Prospect Theory**:
