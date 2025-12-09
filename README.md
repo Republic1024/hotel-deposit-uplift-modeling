@@ -2,11 +2,7 @@
 #### **Causal Inference · Customer Behavior Analytics · Observational A/B**
 
 This project uses **uplift modeling (heterogeneous treatment effect / ITE)** to estimate how **deposit policy** (`deposit_type`) affects **booking cancellations** (`is_canceled`) on a per-user basis. Rather than predicting “who cancels,” we quantify **the causal *difference***— *how much the probability of cancellation would change if a user were (or were not) required to pay a deposit*.
-![360c0792d85ce99ff02923629ef47494](./assets/360c0792d85ce99ff02923629ef47494.jpg)
-
-![image-20251030034031202](./assets/image-20251030034031202.png)
-
-![image-20251030032655183](./assets/image-20251030032655183.png)
+![微信图片_20251210022336_959_80](./assets/微信图片_20251210022336_959_80.jpg)
 
 ### 🔥 Executive Summary (What this model proves)
 
