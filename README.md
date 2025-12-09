@@ -33,12 +33,13 @@ By quantifying this **causal difference**, we identify sub-populations where dep
 ## 🛠 High-Level Workflow
 
 | Step | Method | Purpose |
-| :--- | :--- | :--- |
+|------|--------|---------|
 | **1. Treatment Definition** | `T = (deposit_type != "No Deposit")` | Frame as Observational A/B Test |
-| **2. Bias Correction** | **Propensity Score + IPW** | Remove confounding selection bias ($P(T \mid X)$) |
-| **3. Causal Learning** | **T-Learner (CatBoost)** | Estimate counterfactual outcomes ($Y_1, Y_0$) |
+| **2. Bias Correction** | Propensity Score + IPW | Remove confounding selection bias (P(T \| X)) |
+| **3. Causal Learning** | T-Learner (CatBoost) | Estimate counterfactual outcomes (Y1, Y0) |
 | **4. Uplift Computation** | `ITE = P(Cancel|Deposit) - P(Cancel|No Deposit)` | Quantify individual causal impact |
-| **5. Segmentation** | **Uplift Deciles** | Group users for policy targeting |
+| **5. Segmentation** | Uplift Deciles | Group users for policy targeting |
+
 
 ### 🧮 Core Equations
 
