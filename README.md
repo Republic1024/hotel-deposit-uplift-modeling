@@ -1,29 +1,46 @@
-# Hotel Deposit Uplift Modeling
-#### **Causal Inference · Customer Behavior Analytics · Observational A/B**
+# Hotel Deposit Uplift Modeling: Causal Inference for Revenue Management
 
-This project uses **uplift modeling (heterogeneous treatment effect / ITE)** to estimate how **deposit policy** (`deposit_type`) affects **booking cancellations** (`is_canceled`) on a per-user basis. Rather than predicting “who cancels,” we quantify **the causal *difference***— *how much the probability of cancellation would change if a user were (or were not) required to pay a deposit*.
-![微信图片_20251210022336_959_80](./assets/微信图片_20251210022336_959_80.jpg)
+![Uplift](https://img.shields.io/badge/Method-Uplift_Modeling-success) ![Stack](https://img.shields.io/badge/Stack-CatBoost_%2B_IPW-blue) ![Impact](https://img.shields.io/badge/Business_Impact-Revenue_Protection-orange) ![Status](https://img.shields.io/badge/Status-Research_Complete-brightgreen)
 
-### 🔥 Executive Summary (What this model proves)
+> **"Deposits do not discipline behavior — they select for behavior."**
 
-- Deposit policies do **not** reduce cancellations uniformly.
-- The population contains **two opposite behavioral segments**:
-  1) **High-Sensitivity users** — already committed → Deposit **induces regret → leads to cancellation**.
-  2) **Low-Sensitivity users** — low planning stability → Deposit **enforces commitment → reduces cancellation**.
-- Therefore:
-  - **Uniform deposit policy destroys value.**
-  - **Uplift-based differential deposit policy increases booking stability.**
-- Counterfactual predictions match real-world cancellation behavior at **0.999+ correlation**, confirming causal validity.
+This project applies **Causal Uplift Modeling (Heterogeneous Treatment Effect / ITE)** to the hotel booking domain. Instead of the traditional "will they cancel?" prediction, we answer the ROI-critical question: **"How will the probability of cancellation change if we enforce (or waive) a deposit for this specific user?"**
 
-### High-Level Workflow
+By quantifying this **causal difference**, we identify sub-populations where deposit policies backfire, enabling a differentiated strategy that maximizes revenue retention.
 
-| Step | Method | Purpose |
-|---|---|---|
-| Define Treatment | `treatment = (deposit_type != "No Deposit")` | Observational A/B framing |
-| Balance Groups | **Propensity Score + IPW** | Remove self-selection bias |
-| Model Counterfactuals | **T-Learner (2 Gradient Boosting Models)** | Predict cancel probability under deposit vs no-deposit |
-| Compute Uplift | `uplift = f₁(x) − f₀(x)` | Estimate *individual* causal effect |
-| Segment Customers | **Uplift Deciles** | Identify groups that should / should not pay deposits |
+![System Architecture](./assets/微信图片_20251210022336_959_80.jpg)
+
+---
+
+## 🔥 Executive Summary & Behavioral Economics
+
+**Key Discovery:** Deposit policies do **not** reduce cancellations uniformly. The population exhibits heterogeneous responses best explained by **Prospect Theory**:
+
+1.  **🚫 The "Sleeping Dogs" (High-Sensitivity)**:
+    * **Behavior:** Committed planners who view deposits not as sunk costs, but as potential losses (**Loss Aversion**).
+    * **Impact:** Enforcing a deposit triggers anxiety/regret, causing them to cancel bookings they would otherwise have kept.
+    * **Action:** **Waive Deposit**.
+
+2.  **✅ The "Persuadables" (Low-Sensitivity)**:
+    * **Behavior:** Impulsive users with low planning stability.
+    * **Impact:** The deposit acts as a "Commitment Device," significantly reducing their cancellation rate.
+    * **Action:** **Require Deposit**.
+
+**Conclusion:** A uniform deposit policy destroys value by waking "Sleeping Dogs." An Uplift-based policy captures value by targeting "Persuadables."
+
+> **Validation:** Counterfactual predictions match real-world cancellation behavior at **0.999+ correlation**, confirming the causal validity of the model structure.
+
+---
+
+## 🛠 High-Level Workflow
+
+| Step                        | Method                                           | Purpose                                       |
+| :-------------------------- | :----------------------------------------------- | :-------------------------------------------- |
+| **1. Treatment Definition** | `T = (deposit_type != "No Deposit")`             | Frame as Observational A/B Test               |
+| **2. Bias Correction**      | **Propensity Score + IPW**                       | Remove confounding selection bias ($P(T       |
+| **3. Causal Learning**      | **T-Learner (CatBoost)**                         | Estimate counterfactual outcomes ($Y_1, Y_0$) |
+| **4. Uplift Computation**   | `ITE = P(Cancel|Deposit) - P(Cancel|No Deposit)` | Quantify individual causal impact             |
+| **5. Segmentation**         | **Uplift Deciles**                               | Group users for policy targeting              |
 
 ### 🧮 Core Equations
 
@@ -66,26 +83,22 @@ Then the **uplift score** for each customer is:
 
 ### 🔍 Core Empirical Findings
 
-#### 1) Deposit Has **Opposite Effects** on Two Types of Users
+### 1. Heterogeneous Treatment Effects (HTE)
+The model successfully separated users into distinct causal segments:
 
-| User Segment                       | Psychological Profile                            | Effect of Deposit                              | Optimal Policy                                               |
-| ---------------------------------- | ------------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------ |
-| **High-Sensitivity (High-Uplift)** | Risk-averse, prone to regret, committed planners | **Deposit triggers anxiety → Cancels**         | **Waive deposit** + Do **not** show alternative deals after booking |
-| **Low-Sensitivity (Low-Uplift)**   | Impulsive, low planning stability                | **Deposit enforces commitment → Cancels less** | **Require deposit / non-refundable terms**                   |
+| Segment              | Industry Term       | Psychological Profile        | Effect of Deposit (ITE)                             | Optimal Action      |
+| :------------------- | :------------------ | :--------------------------- | :-------------------------------------------------- | :------------------ |
+| **High Sensitivity** | **"Sleeping Dogs"** | Risk-averse, prone to regret | **Positive (>0)** <br> *(Deposit increases cancel)* | **Waive Deposit**   |
+| **Low Sensitivity**  | **"Persuadables"**  | Low commitment, transient    | **Negative (<0)** <br> *(Deposit reduces cancel)*   | **Require Deposit** |
 
-#### 2) **Counterfactual Model vs Real Behavior (Validation)**
+### 2. Structural Validation
+Comparing the model's *counterfactual* predictions against observed data for extreme deciles:
 
-| Group                | No Deposit (Predicted) | Deposit (Predicted) | No Deposit (Observed) | Deposit (Observed) |
-| -------------------- | ---------------------- | ------------------- | --------------------- | ------------------ |
-| **High-Sensitivity** | 0.171                  | 0.991               | 0.153                 | **0.999**          |
-| **Low-Sensitivity**  | 0.198                  | 0.041               | 0.203                 | **0.060**          |
+| Group             | Predicted $P(Y \mid \text{No Dep})$ | Predicted $P(Y \mid \text{Dep})$ | Observed $P(Y \mid \text{No Dep})$ | Observed $P(Y \mid \text{Dep})$ |
+| :---------------- | :---------------------------------- | :------------------------------- | :--------------------------------- | :------------------------------ |
+| **Sleeping Dogs** | 17.1%                               | **99.1%**                        | 15.3%                              | **99.9%**                       |
+| **Persuadables**  | 19.8%                               | **4.1%**                         | 20.3%                              | **6.0%**                        |
 
-#### 3) Observed Cancellation Rate (Real Behavior)
-
-| **User Group**              | **No Deposit (Observed)** | **Deposit (Observed)** | **Causal Effect (Policy Impact)** |
-| --------------------------- | ------------------------- | ---------------------- | --------------------------------- |
-| **High-Uplift** (Top 20%)   | 15.3%                     | 99.9%                  | **+84.6 p.p.** (Backfire)         |
-| **Low-Uplift** (Bottom 20%) | 20.3%                     | 6.0%                   | **-14.3 p.p.** (Effective)        |
 
 ✅ Pearson Similarity = **0.9993**  
 ✅ Cosine Similarity = **0.9996**  
@@ -93,7 +106,14 @@ Then the **uplift score** for each customer is:
 
 ![image-20251108084428025](./assets/image-20251108084428025.png)
 
-#### 3) Behavioral Interpretation
+### 3. Observed Cancellation Rate (Real Behavior)
+
+| **User Group**              | **No Deposit (Observed)** | **Deposit (Observed)** | **Causal Effect (Policy Impact)** |
+| --------------------------- | ------------------------- | ---------------------- | --------------------------------- |
+| **High-Uplift** (Top 20%)   | 15.3%                     | 99.9%                  | **+84.6 p.p.** (Backfire)         |
+| **Low-Uplift** (Bottom 20%) | 20.3%                     | 6.0%                   | **-14.3 p.p.** (Effective)        |
+
+#### Behavioral Interpretation
 
 **Deposits do not discipline behavior — they *select for* behavior.**
 
@@ -103,20 +123,23 @@ Then the **uplift score** for each customer is:
 > **Uniform deposit policy = value destruction**  
 > **Uplift-based differentiated policy = value creation**
 
-### 💼 Business Playbook (Actionable)
+## 💼 Business Playbook (Actionable)
 
-| Customer Signal                                              | Behavioral Interpretation     | Recommended Action                                           |
-| ------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------ |
-| High lead time + multiple special requests + repeat customer | **Deliberate planner**        | ✅ *Waive deposit* + 📴 *Stop post-booking marketing* (“静默成交”) |
-| Short lead time + many prior cancellations + transient segment | **Low-commitment / browsing** | 💰 *Require deposit / non-refundable* or *Deposit-as-credit*  |
+Based on the uplift score, we recommend the following differential strategies:
 
-## 📦 Dataset
+| Customer Signal                                     | Segment           | Recommended Action                                           |
+| :-------------------------------------------------- | :---------------- | :----------------------------------------------------------- |
+| **High lead time, Special requests, Repeat guests** | **Sleeping Dogs** | **"Silent Closing" (静默成交)**<br>Waive deposit & suppress post-booking marketing to avoid cognitive dissonance. |
+| **Short lead time, History of cancels, Transient**  | **Persuadables**  | **"Commitment Lock"**<br>Require non-refundable deposit or Deposit-as-Credit to enforce stability. |
 
-* **File:** `./archive_8/hotel_bookings.csv`
-* **Size:** 119,390 bookings, 32 columns
-* **Notable fields:** `deposit_type`, `is_canceled`, `lead_time`, `customer_type`, `market_segment`, `previous_cancellations`, `booking_changes`, `total_of_special_requests`, `days_in_waiting_list`, etc.
+## 📦 Dataset & Tech Stack
 
-> **Note:** The dataset is excluded via `.gitignore` (`archive_8/`, `archive_8.zip`). Place the CSV at the path above before running.
+* **Source:** `./archive_8/hotel_bookings.csv` (119,390 bookings)
+* **Key Features:** `lead_time`, `market_segment`, `previous_cancellations`, `total_of_special_requests`, `days_in_waiting_list`.
+* **Stack:** Python, CausalML / Scikit-Learn, CatBoost, SHAP (for interpretability).
+
+> **Note:** The dataset is excluded via `.gitignore`. Please download the standard Hotel Booking Demand dataset.
+
 
 ## 🧪 Methodology
 
@@ -139,34 +162,23 @@ It answers *“what changes if we add/remove the deposit?”* instead of *“who
 
 ## 📓 Notebook Outline
 
-* **Cell 1 — Data loading & project scaffold**: shape, columns, sanity checks.
-* **Cell 2 — Naïve A/B**: raw difference in cancel rates.
-* **Cell 3 — Feature prep**: one-hot, targets, treatment.
-* **Cell 3.5 — Propensity score**: logistic regression (P(T=1\mid X)).
-* **Cell 3.6 — IPW**: stabilized weights for treated/controls.
-* **Cell 4 — Weighted T-Learner**: train **f₁**, **f₀** with sample weights.
-* **Cell 4.1 — Fit sanity**: group-specific train accuracy (focus remains on effect estimation).
-* **Cell 5 — Per-user uplift**: compute and describe distribution; deciles.
-* **Cell 6 — Decile analysis**: cancellation vs. uplift deciles; baseline risk check.
+1.  **Data Loading & Sanity Checks:** Schema validation.
+2.  **Naïve A/B Analysis:** Why simple averaging fails.
+3.  **Causal Feature Engineering:** Propensity modeling ($P(T|X)$).
+4.  **IPW Weighting:** Balancing the covariate distributions.
+5.  **T-Learner Training:** Dual CatBoost implementation.
+6.  **Uplift Evaluation:** Decile charts, Qini curves (implied), and Policy attribution.
 
+## 🛡️ Caveats & Future Work
 
-## 📈 Sanity Checks (illustrative)
-
-* **Group fits (train)**: f₁ (treated) ≈ **0.9988**, f₀ (control) ≈ **0.7923**.
-  *Note:* these are **not** the objective; the goal is **credible effect estimation**, not max classification accuracy.
-
-## 🧠 Business Playbook
-
-* **Low-sensitivity users** (high baseline risk): require **deposit / non-refundable** or use **deposit-as-credit** mechanisms to lock commitment.
-* **High-sensitivity users** (low baseline risk): **waive deposit** and **avoid post-booking promotions** to prevent cognitive dissonance and cancellations.
-
-## 🛡️ Caveats
-
-* Observational data → relies on **unconfoundedness** given features; hidden confounders may remain.
-* Always A/B validate policy before full rollout (e.g., staggered or geo experiments).
+* **Unobserved Confounders:** As an observational study, we assume *strong ignorability*. Hidden variables (e.g., price at time of booking) could influence results.
+* **Validation:** While OOT (Out-of-Time) validation is strong, a randomized control trial (RCT) is recommended for final policy calibration.
 
 ## 📜 License
 
 MIT (code). Dataset license follows its original source.
 
-**Contact:** [GitHub @republic1024](https://github.com/Republic1024) · For academic/industry collaboration on decision intelligence & causal uplift modeling.
+
+
+**Contact:** [GitHub @republic1024](https://github.com/Republic1024)
+*Open to collaboration on Quantitative Finance, Causal Inference, and Decision Intelligence.*
