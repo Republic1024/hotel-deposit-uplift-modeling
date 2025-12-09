@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uplift Modeling Project Overview</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .overview-container {
+            width: 1000px;
+            max-width: 95%;
+            border: 1px solid #ddd;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .header {
+            font-size: 24px;
+            font-weight: 600;
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .pipeline {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping */
+        }
+
+        .column {
+            flex: 1;
+            min-width: 300px; /* Ensure min-width */
+            padding: 25px;
+        }
+
+        .column-left {
+            border-right: 1px solid #eee;
+        }
+
+        .step {
+            margin-bottom: 25px;
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        /* Corresponds to matplotlib colors */
+        .step-title-blue {
+            color: #3366cc;
+        }
+
+        .step-title-green {
+            color: #228833;
+        }
+
+        .step-content ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .step-content li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .step-content li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .formula {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 16px;
+            color: #444444;
+            background-color: #f7f7f7;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        .conclusion {
+            font-size: 16px;
+            font-weight: 600;
+            font-style: italic;
+            color: #228833;
+            border-top: 2px solid #228833;
+            padding-top: 15px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overview-container">
+        <div class="header">
+            📊 Uplift Modeling Pipeline Overview
+        </div>
+        <div class="pipeline">
+            <div class="column column-left">
+
+                <div class="step">
+                    <div class="step-title step-title-blue">1️⃣ Data Loading</div>
+                    <div class="step-content">
+                        <ul>
+                            <li>Read 119,390 booking records from <code>hotel_bookings.csv</code>.</li>
+                            <li>Extract key variables: <code>deposit_type</code>, <code>is_canceled</code>, <code>lead_time</code>, etc.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-title step-title-blue">2️⃣ Causal Setup</div>
+                    <div class="step-content">
+                        <ul>
+                            <li>Define Treatment: <code>deposit_type != 'No Deposit'</code></li>
+                            <li>Define Target: <code>is_canceled = 1</code></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-title step-title-blue">3️⃣ Bias Adjustment</div>
+                    <div class="step-content">
+                        <ul>
+                            <li>Estimate Propensity Score: <i>e(x) = P(T=1 | X)</i></li>
+                            <li>Apply Inverse Probability Weighting (IPW) to eliminate self-selection bias.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-title step-title-blue">4️⃣ Uplift Modeling (T-Learner)</div>
+                    <div class="step-content">
+                        <ul>
+                            <li>Fit two weighted models (e.g., Gradient Boosting).</li>
+                            <li><i>f<sub>1</sub>(x)</i> = P(Cancel | Deposit, X)</li>
+                            <li><i>f<sub>0</sub>(x)</i> = P(Cancel | No Deposit, X)</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="column">
+
+                <div class="step">
+                    <div class="step-title step-title-green">5️⃣ Compute Uplift</div>
+                    <div class="step-content">
+                        <ul>
+                            <li>Calculate the marginal effect (ITE) for each individual.</li>
+                        </ul>
+                        <div class="formula">
+                            uplift(x) = <i>f<sub>1</sub>(x)</i> - <i>f<sub>0</sub>(x)</i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-title step-title-green">6️⃣ Insight & Strategy</div>
+                    <div class="step-content">
+                        <ul>
+                            <li>Finding: Deposit-sensitive users have a *lower* baseline cancel risk (0.13 vs. 0.51).</li>
+                            <li>Strategy: Enforce deposits only for low-sensitivity (high-risk) users.</li>
+                            <li>Strategy: Waive deposits for high-sensitivity (low-risk) users to build trust.</li>
+                            <li>Strategy: Avoid post-booking offers for high-sensitivity users to prevent cognitive dissonance.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="conclusion">
+                    ✅ Key Finding: The deposit acts as a customer "Selection Filter," not a universal "Deterrent."
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
